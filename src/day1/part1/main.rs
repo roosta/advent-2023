@@ -1,7 +1,7 @@
 use std::fs;
 
 pub fn main() {
-    let input = fs::read_to_string("input/day1/part1.txt").unwrap();
+    let input = fs::read_to_string("input/day1.txt").unwrap();
     let result: i32 = input.lines().map(|line| {
         let left = line.find(|c: char| c.is_digit(10)).unwrap();
         let right = line.rfind(|c: char| c.is_digit(10)).unwrap();
