@@ -83,7 +83,6 @@ pub fn main() {
         let n = find_digits(line);
         let p: i32 = n.parse().unwrap();
         result += p;
-        println!("\"{}\": {}", line, p)
     }
     println!("result = {:#?}", result);
 }
