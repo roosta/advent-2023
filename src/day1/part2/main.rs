@@ -1,106 +1,99 @@
 use std::fs;
+use std::collections::HashMap;
 
 #[derive(Debug)]
-struct Number {
-    i: i32,
-    alpha: char,
-    word: &'static str,
+struct Word {
+    value: char,
+    index: usize
 }
 
-const NUM: [Number; 9] = [
-    Number { i: 1, alpha: '1', word: "one" },
-    Number { i: 2, alpha: '2', word: "two" },
-    Number { i: 3, alpha: '3', word: "three" },
-    Number { i: 4, alpha: '4', word: "four" },
-    Number { i: 5, alpha: '5', word: "five" },
-    Number { i: 6, alpha: '6', word: "six" },
-    Number { i: 7, alpha: '7', word: "seven" },
-    Number { i: 8, alpha: '8', word: "eight" },
-    Number { i: 9, alpha: '9', word: "nine" },
-];
+fn find_word(line: &str, right: bool) -> Option<Word> {
+    let left = !right;
+    let mut result: Option<Word> = None;
+    let numalpha = HashMap::from([
+        ("one",   '1'),
+        ("two",   '2'),
+        ("three", '3'),
+        ("four",  '4'),
+        ("five",  '5'),
+        ("six",   '6'),
+        ("seven", '7'),
+        ("eight", '8'),
+        ("nine",  '9')
 
-fn find_digit(line: &str) -> Option<Number> {
-    let mut pos = line.len();
-    let mut out: Option<Number> = None;
-    for n in NUM {
-        let word = line.find(n.word);
-        let alpha = line.find(n.alpha);
-        match (alpha, word) {
-            (Some(a), Some(w)) => {
-                if a < w && pos < a {
-                    pos = a;
-                    out = Some(n);
-                } else if w < a && pos < w {
-                    pos = w;
-                    out = Some(n);
-                }
-            },
-            (Some(a), None) => {
-                if a < pos {
-                    pos = a;
-                    out = Some(n)
-
-                }
-            },
-            (None, Some(w)) => {
-                if w < pos {
-                    pos = w;
-                    out = Some(n);
-                }
-            },
-            (None, None) => continue
+    ]);
+    for (key, value) in numalpha {
+        let opt = if right {
+            line.rfind(key)
+        } else {
+            line.find(key)
         };
+        match opt {
+            Some(i) => {
+                if let Some(r) = &result {
+                    if left && i < r.index {
+                        result = Some(Word { value, index: i })
+                    } else if right && i > r.index {
+                        result = Some(Word { value, index: i })
+                    }
+                } else {
+                    result = Some(Word { value, index: i })
+                }
+
+            }
+            _ => ()
+
+
+        }
     }
-    out
+    result
 }
 
-fn rfind_digit(line: &str) -> Option<Number> {
-    let mut pos = 0;
-    let mut out: Option<Number> = None;
-    for n in NUM {
-        let word = line.rfind(n.word);
-        let alpha = line.rfind(n.alpha);
-        match (alpha, word) {
-            (Some(a), Some(w)) => {
-                if a > w && pos > a {
-                    pos = a;
-                    out = Some(n);
-                } else if w > a && pos > w {
-                    pos = w;
-                    out = Some(n);
-                }
-            },
-            (Some(a), None) => {
-                if a > pos {
-                    pos = a;
-                    out = Some(n)
+fn find_digits(line: &str) -> String {
+    let mut result = String::new();
 
-                }
-            },
-            (None, Some(w)) => {
-                if w > pos {
-                    pos = w;
-                    out = Some(n);
-                }
-            },
-            (None, None) => continue
-        };
+    // Find left digit
+    let digit = line.find(|c: char| c.is_digit(10));
+    let word = find_word(line, false);
+    match (digit, word) {
+        (Some(d), Some(w)) => {
+            if d < w.index {
+                result.push(line.chars().nth(d).unwrap())
+            } else {
+                result.push(w.value)
+            }
+        },
+        (Some(d), None) => result.push(line.chars().nth(d).unwrap()),
+        (None, Some(w)) => result.push(w.value),
+        _ => panic!("Didn't find any number on line \"{}\"", line)
     }
-    out
+
+    // Find right digit
+    let word = find_word(line, true);
+    let digit = line.rfind(|c: char| c.is_digit(10));
+    match (digit, word) {
+        (Some(d), Some(w)) => {
+            if d > w.index {
+                result.push(line.chars().nth(d).unwrap())
+            } else {
+                result.push(w.value)
+            }
+        },
+        (Some(d), None) => result.push(line.chars().nth(d).unwrap()),
+        (None, Some(w)) => result.push(w.value),
+        _ => panic!("Didn't find any number on line \"{}\"", line)
+    }
+
+    result
 }
 pub fn main() {
-    let input = fs::read_to_string("input/day1/part2.txt").unwrap();
-    let result: Option<i32> = input.lines().map(|line| {
-        let left = match find_digit(line) {
-            Some(d) => d,
-            None => panic!("Can't find left digit in line: {}", line)
-        };
-        let right = match rfind_digit(line) {
-            Some(d) => d,
-            None => panic!("Can't find right digit in line: {}", line)
-
-        };
-        return left.i * 10 + right.i
-    }).reduce(|acc, n| acc + n);
-    println!("result = {:#?}", result.unwrap());
+    let input = fs::read_to_string("input/day1.txt").unwrap();
+    let mut result = 0;
+    for line in input.lines() {
+        let n = find_digits(line);
+        let p: i32 = n.parse().unwrap();
+        result += p;
+        println!("\"{}\": {}", line, p)
+    }
+    println!("result = {:#?}", result);
 }
