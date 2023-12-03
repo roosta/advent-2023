@@ -7,8 +7,7 @@ struct Word {
     index: usize
 }
 
-fn find_word(line: &str, right: bool) -> Option<Word> {
-    let left = !right;
+fn find_word(line: &str, dir: &str) -> Option<Word> {
     let mut result: Option<Word> = None;
     let numalpha = HashMap::from([
         ("one",   '1'),
@@ -23,7 +22,7 @@ fn find_word(line: &str, right: bool) -> Option<Word> {
 
     ]);
     for (key, value) in numalpha {
-        let opt = if right {
+        let opt = if dir == "reverse" {
             line.rfind(key)
         } else {
             line.find(key)
@@ -31,9 +30,9 @@ fn find_word(line: &str, right: bool) -> Option<Word> {
         match opt {
             Some(i) => {
                 if let Some(r) = &result {
-                    if left && i < r.index {
+                    if dir == "forward" && i < r.index {
                         result = Some(Word { value, index: i })
-                    } else if right && i > r.index {
+                    } else if dir == "reverse" && i > r.index {
                         result = Some(Word { value, index: i })
                     }
                 } else {
@@ -52,36 +51,27 @@ fn find_word(line: &str, right: bool) -> Option<Word> {
 fn find_digits(line: &str) -> String {
     let mut result = String::new();
 
-    // Find left digit
-    let digit = line.find(|c: char| c.is_digit(10));
-    let word = find_word(line, false);
-    match (digit, word) {
-        (Some(d), Some(w)) => {
-            if d < w.index {
-                result.push(line.chars().nth(d).unwrap())
-            } else {
-                result.push(w.value)
-            }
-        },
-        (Some(d), None) => result.push(line.chars().nth(d).unwrap()),
-        (None, Some(w)) => result.push(w.value),
-        _ => panic!("Didn't find any number on line \"{}\"", line)
-    }
+    for dir in ["forward", "reverse"] {
+        let digit = if dir == "forward" {
+            line.find(|c: char| c.is_digit(10))
+        } else {
+            line.rfind(|c: char| c.is_digit(10))
+        };
 
-    // Find right digit
-    let word = find_word(line, true);
-    let digit = line.rfind(|c: char| c.is_digit(10));
-    match (digit, word) {
-        (Some(d), Some(w)) => {
-            if d > w.index {
-                result.push(line.chars().nth(d).unwrap())
-            } else {
-                result.push(w.value)
-            }
-        },
-        (Some(d), None) => result.push(line.chars().nth(d).unwrap()),
-        (None, Some(w)) => result.push(w.value),
-        _ => panic!("Didn't find any number on line \"{}\"", line)
+        let word = find_word(line, dir);
+        match (digit, word) {
+            (Some(d), Some(w)) => {
+                let test = if dir == "forward" { d < w.index } else { d > w.index };
+                if test {
+                    result.push(line.chars().nth(d).unwrap())
+                } else {
+                    result.push(w.value)
+                }
+            },
+            (Some(d), None) => result.push(line.chars().nth(d).unwrap()),
+            (None, Some(w)) => result.push(w.value),
+            _ => panic!("Didn't find any number on line \"{}\"", line)
+        }
     }
 
     result
