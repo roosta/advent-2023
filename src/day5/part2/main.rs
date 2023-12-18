@@ -106,7 +106,8 @@ fn seeds_to_ranges(seeds: Vec<i64>) -> Vec<Range<i64>> {
 }
 
 fn main() {
-
+    use std::time::Instant;
+    let now = Instant::now();
     // Parse input
     let input = fs::read_to_string("input/day5.txt").unwrap();
     let mut lines = input.lines().peekable();
@@ -143,5 +144,7 @@ fn main() {
             min_loc = val;
         }
     }
+    let elapsed = now.elapsed();
+    println!("Elapsed: {:.2?}", elapsed);
     println!("lowest location: {:#?}", min_loc);
 }
